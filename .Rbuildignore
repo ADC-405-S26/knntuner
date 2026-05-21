@@ -3,3 +3,5 @@
 ^project\.Rcheck$
 ^project.*\.tar\.gz$
 ^project.*\.tgz$
+^LICENSE\.md$
+^Untitled\.R$
