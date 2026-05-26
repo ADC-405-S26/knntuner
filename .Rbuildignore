@@ -5,3 +5,6 @@
 ^project.*\.tgz$
 ^LICENSE\.md$
 ^Untitled\.R$
+^knntuner\.Rcheck$
+^knntuner.*\.tar\.gz$
+^knntuner.*\.tgz$

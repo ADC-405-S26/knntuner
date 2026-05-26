@@ -3,8 +3,11 @@ Title: Simplify Regression Model Tuning
 Version: 0.0.0.9000
 Authors@R: 
     person("Evan", "Toth", , "evan.l.toth@lawrence.edu", role = c("aut", "cre"))
-Description: A simple package allowing users to more efficiently tune their models. Specifically designed for use in STATS 205.
+Description: A simple package allowing users to more efficiently tune their models. Specifically designed for use in STATS 205 at Lawrence University.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 8.0.0
+Imports: 
+    caret,
+    checkmate

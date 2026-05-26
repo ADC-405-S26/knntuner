@@ -6,3 +6,6 @@ project.Rcheck/
 project*.tar.gz
 project*.tgz
 Untitled.R
+knntuner.Rcheck/
+knntuner*.tar.gz
+knntuner*.tgz
