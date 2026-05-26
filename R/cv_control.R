@@ -16,6 +16,13 @@ cv_control <- function(method = "repeatedcv",
                        repeats = 1,
                        classProbs = TRUE,
                        summaryFunction = caret::twoClassSummary) {
+  checkmate::assert_string(method)
+  checkmate::assert_count(number)
+  checkmate::assert_count(repeats)
+  checkmate::assert_true(number > 0)
+  checkmate::assert_true(repeats > 0)
+  checkmate::assert_logical(classProbs, len = 1)
+  checkmate::assert_function(summaryFunction)
   caret::trainControl(
     method = method,
     number = number,

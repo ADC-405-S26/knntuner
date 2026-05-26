@@ -12,7 +12,11 @@
 #' )
 #' bestk(example_model)
 bestk <- function(model) {
-  checkmate::assert_data_frame(results)
-  checkmate::assert_data_frame(bestTune)
+  checkmate::assert_list(model)
+  checkmate::assert_names(names(model), must.include = c("results", "bestTune"))
+  checkmate::assert_data_frame(model$results, col.names = "named")
+  checkmate::assert_data_frame(model$bestTune, col.names = "named")
+  checkmate::assert_names(names(model$results), must.include = "k")
+  checkmate::assert_names(names(model$bestTune), must.include = "k")
   model$results[model$results$k == model$bestTune$k, ]
 }
