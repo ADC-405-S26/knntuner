@@ -8,3 +8,4 @@
 ^knntuner\.Rcheck$
 ^knntuner.*\.tar\.gz$
 ^knntuner.*\.tgz$
+^data-raw$
