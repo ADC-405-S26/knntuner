@@ -12,8 +12,14 @@ Imports:
     caret,
     checkmate
 Suggests: 
+    knitr,
+    recipes,
+    rmarkdown,
+    rsample,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Depends: 
     R (>= 3.5)
 LazyData: true
+VignetteBuilder: knitr
+URL: https://adc-405-s26.github.io/knntuner/

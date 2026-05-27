@@ -9,3 +9,7 @@ Untitled.R
 knntuner.Rcheck/
 knntuner*.tar.gz
 knntuner*.tgz
+inst/doc
+/doc/
+/Meta/
+docs
