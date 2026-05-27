@@ -1,2 +1,118 @@
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
 # knntuner
-A simple package for tuning KNN models
+
+<!-- badges: start -->
+
+<!-- badges: end -->
+
+The goal of knntuner is to allow for more efficient cross-validation and
+tuning for k parameters within KNN problems.
+
+## Installation
+
+You can install the development version of `knntuner` from
+[GitHub](https://github.com/) with:
+
+``` r
+# install.packages("remotes")
+# install.packages("devtools")
+devtools::install_github("evantoth1/ADC-405-S26/knntuner")
+```
+
+## Example
+
+This is a basic example which shows how `knntuner` can be used in the
+STATS 205 KNN model building and tuning workflow.
+
+``` r
+library(knntuner)
+library(rsample)
+library(caret)
+#> Loading required package: ggplot2
+#> Loading required package: lattice
+#> 
+#> Attaching package: 'caret'
+#> The following object is masked from 'package:rsample':
+#> 
+#>     calibration
+library(recipes)
+#> Loading required package: dplyr
+#> 
+#> Attaching package: 'dplyr'
+#> The following objects are masked from 'package:stats':
+#> 
+#>     filter, lag
+#> The following objects are masked from 'package:base':
+#> 
+#>     intersect, setdiff, setequal, union
+#> 
+#> Attaching package: 'recipes'
+#> The following object is masked from 'package:stats':
+#> 
+#>     step
+# necessary packages
+```
+
+First, start with the standard split of data into a training set and a
+test set. This example uses the student dataset built into the package.
+
+``` r
+set.seed(208)
+
+knntuner_data_split <- initial_split(data = student_knn_data, prop = 0.8)
+
+student_train <- training(knntuner_data_split)
+student_test  <- testing(knntuner_data_split)
+```
+
+Next, create a recipe to remove the ID column, dummy-code categorical
+predictors, and scale the numeric predictors for KNN, to prepare the
+data for analysis.
+
+``` r
+student_recipe <- recipe(pass ~ ., data = student_train) |>
+  step_rm(id) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_center(all_numeric_predictors()) |>
+  step_scale(all_numeric_predictors())
+```
+
+Then, define your cross-validation specifications with the `cv_control`
+function.
+
+``` r
+cv <- cv_control() # the default arguments are a "repeatedcv" method, 5 folds, 1 repeat, classProbs = TRUE, and summaryFunction = caret::twoClassSummary
+```
+
+Next, you can train and cross-validate your model using the
+specifications that you set. Firstly, use the `kgrid` function to
+quickly create a dataframe to hold the cross-validation results for each
+k value. `kgrid` allows you to choose the minimum and maximum k values
+to test, as well as the step size to take.
+
+``` r
+set.seed(208)
+
+k_grid <- kgrid(1, 9, 2) # knntuner function here!
+
+student_model <- train(
+  student_recipe,
+  data = student_train,
+  method = "knn",
+  trControl = cv,
+  tuneGrid = k_grid,
+  metric = "Sens"
+)
+```
+
+Finally, use the `bestk` function to identify the best performing k
+value to choose for your final model! Now, you can move on to training
+your final model, and analyzing its performance on the test data.
+
+``` r
+bestk(student_model)
+#>   k       ROC      Sens      Spec     ROCSD     SensSD    SpecSD
+#> 4 7 0.9443204 0.9277778 0.8642857 0.0415595 0.06617294 0.1014877
+```

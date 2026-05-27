@@ -9,3 +9,4 @@
 ^knntuner.*\.tar\.gz$
 ^knntuner.*\.tgz$
 ^data-raw$
+^README\.Rmd$

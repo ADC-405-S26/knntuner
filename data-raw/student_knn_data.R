@@ -15,7 +15,7 @@ student_knn_data <- data.frame(
   study_hours = study_hours,
   score = score,
   private_tutoring = factor(sample(c("YES", "NO"), n, replace = TRUE)),
-  pass = factor(ifelse(score >= 70, "YES", "NO"))
+  pass = factor(ifelse(score >= 70, "YES", "NO"), levels = c("YES", "NO"))
 )
 
 usethis::use_data(student_knn_data, overwrite = TRUE)
