@@ -1,0 +1,241 @@
+# Intro to knntuner
+
+## Intro to knntuner
+
+### Motivation
+
+KNN model workflows often involve repeatedly creating cross-validation
+controls, tuning grids, and extracting the best-performing k value in
+tedious repetitions. The knntuner package provides several small helper
+functions to help streamline this process.
+
+``` r
+
+library(knntuner)
+```
+
+### Installation
+
+You can install the development version of `knntuner` from
+[GitHub](https://github.com/) with:
+
+``` r
+
+# install.packages("remotes")
+# install.packages("devtools")
+devtools::install_github("evantoth1/ADC-405-S26", subdir = "knntuner")
+```
+
+Common packages that knntuner works with are loaded below.
+
+``` r
+
+library(knntuner)
+library(rsample)
+library(caret)
+#> Loading required package: ggplot2
+#> Loading required package: lattice
+#> 
+#> Attaching package: 'caret'
+#> The following object is masked from 'package:rsample':
+#> 
+#>     calibration
+library(recipes)
+#> Loading required package: dplyr
+#> 
+#> Attaching package: 'dplyr'
+#> The following objects are masked from 'package:stats':
+#> 
+#>     filter, lag
+#> The following objects are masked from 'package:base':
+#> 
+#>     intersect, setdiff, setequal, union
+#> 
+#> Attaching package: 'recipes'
+#> The following object is masked from 'package:stats':
+#> 
+#>     step
+```
+
+### Example data
+
+In this package, there is a small simulated dataset of 100 observations
+in 6 variables. The data measure student characteristics, and tracks
+their performance. The variables included can be seen below.
+
+- `id` - The ID of the student
+- `age` - The age, in years, of the student
+- `study_hours` - The average amount of hours per week a student spends
+  studying outside of class
+- `score` - The student’s test score, out of 100
+- `private_tutoring` - Indicates whether the student is privately
+  tutored, outside of school
+- `pass` - Indicates whether the student meets the threshold to pass,
+  with a score at or above 70.
+
+``` r
+
+summary(student_knn_data)
+#>        id              age         study_hours        score       
+#>  Min.   :  1.00   Min.   :18.00   Min.   : 0.00   Min.   : 33.86  
+#>  1st Qu.: 25.75   1st Qu.:19.00   1st Qu.: 4.00   1st Qu.: 58.37  
+#>  Median : 50.50   Median :20.00   Median : 7.00   Median : 70.50  
+#>  Mean   : 50.50   Mean   :20.02   Mean   : 6.85   Mean   : 70.72  
+#>  3rd Qu.: 75.25   3rd Qu.:21.00   3rd Qu.:10.00   3rd Qu.: 84.79  
+#>  Max.   :100.00   Max.   :22.00   Max.   :15.00   Max.   :100.00  
+#>  private_tutoring  pass   
+#>  NO :46           YES:53  
+#>  YES:54           NO :47  
+#>                           
+#>                           
+#>                           
+#> 
+```
+
+### Train/test split
+
+When creating and evaluating a model, it is important to begin by
+splitting your entire dataset into 2 distinct sections. One section is
+called the training data, where the model is trained. The other section
+is called the test data, where the trained model’s performance can be
+evaluated. These two should be kept separate, to prevent the models
+trained on training data from having inflated performances on the test
+data.
+
+This is one way to split the data.
+
+``` r
+
+set.seed(208)
+
+knntuner_data_split <- initial_split(data = student_knn_data, prop = 0.8)
+
+student_train <- training(knntuner_data_split)
+student_test  <- testing(knntuner_data_split)
+```
+
+### Preprocessing with a recipe
+
+Often when building models, it is important to make small computations,
+and clean or scale predictor variables for better model performance.
+This process is called feature engineering. In this example, for the KNN
+method, because it is a distance-based method, it is important to scale
+the numeric predictors. This is accomplished in the recipe in the code
+chunk below, as well as removing the `id` variable from the analysis,
+because it is not relevant to the analysis.
+
+``` r
+
+student_recipe <- recipe(pass ~ ., data = student_train) |>
+  step_rm(id) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_center(all_numeric_predictors()) |>
+  step_scale(all_numeric_predictors())
+```
+
+### Creating cross-validation settings
+
+The first function in `knntuner` comes into play here, called
+`cv_control`. It allows users to design and store their cross-validation
+specifications quickly and efficiently. Also, `cv_control` comes with
+default inputs commonly used in STATS 205. These are listed below.
+
+- `method` - Identifies the type of cross-validation. `"repeatedcv"` is
+  the default
+- `number` - Specifies the number of folds to make in the training data
+  during cross-validation. `5` is the default
+- `repeats` - Specifies the amount of times to iterate through the
+  cross-validation process. `1` is the default
+- `classProbs` - Indicates whether class probabilities should be
+  computed. TRUE is the default.
+- `summaryFunction` - Specifies which set of metrics to calculate during
+  cross-validation.
+  [`caret::twoClassSummary`](https://rdrr.io/pkg/caret/man/postResample.html)
+  is the default.
+
+Thus in some instances, users only need to code in
+[`cv_control()`](https://adc-405-s26.github.io/knntuner/reference/cv_control.md)
+to create their objects.
+
+``` r
+
+cv <- cv_control()
+```
+
+### Creating a k grid
+
+The second function in `knntuner` allows users to quickly create a k
+grid to store their cross-validation metrics for each value of k that is
+tested. Users can specify which k values they want to test using the
+arguments below.
+
+- `min_k` - Specifies the minimum k value to test
+- `max_k` - Specifies the maximum k value to test
+- `step` - Specifies the amount to increase k by after each
+  cross-validation process
+
+The example below creates a k grid for k values 1, 3, 5, 7, and 9.
+
+``` r
+
+k_grid <- kgrid(1, 9, 2) # 1 is the min_k value, 9 is the max_k value, and the step size is 2
+k_grid
+#>   k
+#> 1 1
+#> 2 3
+#> 3 5
+#> 4 7
+#> 5 9
+```
+
+### Training the KNN model
+
+Now, we can actually train the model and apply cross-validation after
+the preparation. Here, we can use
+[`caret::train()`](https://rdrr.io/pkg/caret/man/train.html) with the
+recipe, the `cv` and `k_grid` objects that we created. These act as
+inputs in the function, and allow for a more efficient application in
+`caret`. Note that in this case, the metric used to score each model
+below is the sensitivity.
+
+``` r
+
+set.seed(208)
+
+student_model <- train(
+  student_recipe,
+  data = student_train,
+  method = "knn",
+  trControl = cv, # knntuner object here!
+  tuneGrid = k_grid, # knntuner object here!
+  metric = "Sens"
+)
+```
+
+### Extracting the best k
+
+Now that we have applied the cross-validation, we can look through each
+value of k, and search for the k that performs the best according to how
+we evaluate it (sensitivity here). The `bestk` function allows us to
+quickly and easily find and identify the best performing k value, as
+well as its corresponding metrics.
+
+There is only 1 input:
+
+- `model` - Specifies the model results from which to find the best `k`
+
+``` r
+
+bestk(student_model)
+#>   k       ROC      Sens      Spec     ROCSD     SensSD    SpecSD
+#> 4 7 0.9443204 0.9277778 0.8642857 0.0415595 0.06617294 0.1014877
+```
+
+In this example, the k value of 7 performed the best!
+
+### Next steps
+
+Now that we have found an optimal k value, the next steps in the process
+would be to train the model on all of the training data, using a `k`
+value of 7. Then we can use that model to make predictions on the test
+data, and evaluate how accurate the model is overall.
