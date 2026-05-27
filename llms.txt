@@ -12,7 +12,7 @@ You can install the development version of `knntuner` from
 
 # install.packages("remotes")
 # install.packages("devtools")
-devtools::install_github("evantoth1/ADC-405-S26", subdir = "knntuner")
+devtools::install_github("ADC-405-S26/knntuner")
 ```
 
 ## Example
