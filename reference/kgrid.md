@@ -24,7 +24,7 @@ kgrid(min_k, max_k, step)
 
 ## Value
 
-a data frame with one column, `k`, containing tuning values
+a data frame with one column, `k`, designed to hold tuning values
 
 ## Examples
 

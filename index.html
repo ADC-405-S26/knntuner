@@ -55,7 +55,8 @@
 </h1></div>
 <!-- badges: start -->
 <!-- badges: end -->
-<p>The goal of knntuner is to allow for more efficient cross-validation and tuning for k parameters within KNN problems.</p>
+<p>The goal of knntuner is to allow for more efficient cross-validation and tuning for k parameters within KNN problems. Often, these processes require several lines of code in a repetitive manner, and knntuner’s goal is to streamline the process.</p>
+<p>In the example below, make sure to run each of the code chunks in the same order that they are presented below - they respresent the basic statistical machine learning workflow. Please see the vignette on the package website for more detailed information on each package function, and ways to customize their outputs.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -96,41 +97,51 @@
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;     step</span></span>
 <span><span class="co"># necessary packages</span></span></code></pre></div>
-<p>First, start with the standard split of data into a training set and a test set. This example uses the student dataset built into the package.</p>
+<p>In this package, there is a small simulated dataset of 100 observations in 6 variables. The data measure student characteristics, and track their performance. A head of the dataset can be seen below, and further information on each variable can be found in the vignette on the package website.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">208</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">knntuner_data_split</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rsample.tidymodels.org/reference/initial_split.html" class="external-link">initial_split</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">student_knn_data</span>, prop <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">student_train</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rsample.tidymodels.org/reference/initial_split.html" class="external-link">training</a></span><span class="op">(</span><span class="va">knntuner_data_split</span><span class="op">)</span></span>
-<span><span class="va">student_test</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rsample.tidymodels.org/reference/initial_split.html" class="external-link">testing</a></span><span class="op">(</span><span class="va">knntuner_data_split</span><span class="op">)</span></span></code></pre></div>
-<p>Next, create a recipe to remove the ID column, dummy-code categorical predictors, and scale the numeric predictors for KNN, to prepare the data for analysis.</p>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">student_knn_data</span><span class="op">)</span> <span class="co"># simulated dataset as a part of knntuner (100 observations)</span></span>
+<span><span class="co">#&gt;   id age study_hours     score private_tutoring pass</span></span>
+<span><span class="co">#&gt; 1  1  18          12 100.00000               NO  YES</span></span>
+<span><span class="co">#&gt; 2  2  21           7  66.49531              YES   NO</span></span>
+<span><span class="co">#&gt; 3  3  18          10  82.54343              YES  YES</span></span>
+<span><span class="co">#&gt; 4  4  18           8  50.57019              YES   NO</span></span>
+<span><span class="co">#&gt; 5  5  20          12  85.38308              YES  YES</span></span>
+<span><span class="co">#&gt; 6  6  21           5  63.46618              YES   NO</span></span></code></pre></div>
+<p>First, start with the standard split of data into a training set and a test set. This example uses the student dataset built into the package.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">student_recipe</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://recipes.tidymodels.org/reference/recipe.html" class="external-link">recipe</a></span><span class="op">(</span><span class="va">pass</span> <span class="op">~</span> <span class="va">.</span>, data <span class="op">=</span> <span class="va">student_train</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://recipes.tidymodels.org/reference/step_rm.html" class="external-link">step_rm</a></span><span class="op">(</span><span class="va">id</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://recipes.tidymodels.org/reference/step_dummy.html" class="external-link">step_dummy</a></span><span class="op">(</span><span class="fu"><a href="https://recipes.tidymodels.org/reference/has_role.html" class="external-link">all_nominal_predictors</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://recipes.tidymodels.org/reference/step_center.html" class="external-link">step_center</a></span><span class="op">(</span><span class="fu"><a href="https://recipes.tidymodels.org/reference/has_role.html" class="external-link">all_numeric_predictors</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://recipes.tidymodels.org/reference/step_scale.html" class="external-link">step_scale</a></span><span class="op">(</span><span class="fu"><a href="https://recipes.tidymodels.org/reference/has_role.html" class="external-link">all_numeric_predictors</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>Then, define your cross-validation specifications with the <code>cv_control</code> function.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">cv</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cv_control.html">cv_control</a></span><span class="op">(</span><span class="op">)</span> <span class="co"># the default arguments are a "repeatedcv" method, 5 folds, 1 repeat, classProbs = TRUE, and summaryFunction = caret::twoClassSummary</span></span></code></pre></div>
-<p>Next, you can train and cross-validate your model using the specifications that you set. Firstly, use the <code>kgrid</code> function to quickly create a dataframe to hold the cross-validation results for each k value. <code>kgrid</code> allows you to choose the minimum and maximum k values to test, as well as the step size to take.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">208</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">k_grid</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/kgrid.html">kgrid</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">9</span>, <span class="fl">2</span><span class="op">)</span> <span class="co"># knntuner function here!</span></span>
+<span><span class="va">knntuner_data_split</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rsample.tidymodels.org/reference/initial_split.html" class="external-link">initial_split</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">student_knn_data</span>, prop <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span> <span class="co"># setting training data to be 80%, and test data to be 20%, and saving these settings as an object</span></span>
+<span></span>
+<span><span class="va">student_train</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rsample.tidymodels.org/reference/initial_split.html" class="external-link">training</a></span><span class="op">(</span><span class="va">knntuner_data_split</span><span class="op">)</span> <span class="co"># training data</span></span>
+<span><span class="va">student_test</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rsample.tidymodels.org/reference/initial_split.html" class="external-link">testing</a></span><span class="op">(</span><span class="va">knntuner_data_split</span><span class="op">)</span> <span class="co"># test data</span></span></code></pre></div>
+<p>Next, create a recipe to remove the ID column, dummy-code categorical predictors, and scale the numeric predictors for KNN, to prepare the data for analysis.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">student_recipe</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://recipes.tidymodels.org/reference/recipe.html" class="external-link">recipe</a></span><span class="op">(</span><span class="va">pass</span> <span class="op">~</span> <span class="va">.</span>, data <span class="op">=</span> <span class="va">student_train</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://recipes.tidymodels.org/reference/step_rm.html" class="external-link">step_rm</a></span><span class="op">(</span><span class="va">id</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="co"># ID will not be used as a predictor</span></span>
+<span>  <span class="fu"><a href="https://recipes.tidymodels.org/reference/step_dummy.html" class="external-link">step_dummy</a></span><span class="op">(</span><span class="fu"><a href="https://recipes.tidymodels.org/reference/has_role.html" class="external-link">all_nominal_predictors</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="co"># dummy encoding nominal categorical variables</span></span>
+<span>  <span class="fu"><a href="https://recipes.tidymodels.org/reference/step_center.html" class="external-link">step_center</a></span><span class="op">(</span><span class="fu"><a href="https://recipes.tidymodels.org/reference/has_role.html" class="external-link">all_numeric_predictors</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="co"># normalizing numeric values step 1</span></span>
+<span>  <span class="fu"><a href="https://recipes.tidymodels.org/reference/step_scale.html" class="external-link">step_scale</a></span><span class="op">(</span><span class="fu"><a href="https://recipes.tidymodels.org/reference/has_role.html" class="external-link">all_numeric_predictors</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="co"># normalizing numeric values step 2</span></span></code></pre></div>
+<p>Then, define your cross-validation specifications with the <code>cv_control</code> function.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">cv</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cv_control.html">cv_control</a></span><span class="op">(</span><span class="op">)</span> <span class="co"># creating the cv specifications and storing them as cv</span></span></code></pre></div>
+<p>Next, you can train and cross-validate your model using the specifications that you set. Firstly, use the <code>kgrid</code> function to quickly create a dataframe to hold the cross-validation results for each k value. <code>kgrid</code> allows you to choose the minimum and maximum k values to test, as well as the step size to take.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">208</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">k_grid</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/kgrid.html">kgrid</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">9</span>, <span class="fl">2</span><span class="op">)</span> <span class="co"># knntuner function here, creating the desired kgrid and storing it as an object</span></span>
 <span></span>
 <span><span class="va">student_model</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/caret/man/train.html" class="external-link">train</a></span><span class="op">(</span></span>
 <span>  <span class="va">student_recipe</span>,</span>
 <span>  data <span class="op">=</span> <span class="va">student_train</span>,</span>
 <span>  method <span class="op">=</span> <span class="st">"knn"</span>,</span>
-<span>  trControl <span class="op">=</span> <span class="va">cv</span>,</span>
-<span>  tuneGrid <span class="op">=</span> <span class="va">k_grid</span>,</span>
+<span>  trControl <span class="op">=</span> <span class="va">cv</span>, <span class="co"># knntuner object here!</span></span>
+<span>  tuneGrid <span class="op">=</span> <span class="va">k_grid</span>, <span class="co"># knntuner object here!</span></span>
 <span>  metric <span class="op">=</span> <span class="st">"Sens"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Finally, use the <code>bestk</code> function to identify the best performing k value to choose for your final model! Now, you can move on to training your final model, and analyzing its performance on the test data.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/bestk.html">bestk</a></span><span class="op">(</span><span class="va">student_model</span><span class="op">)</span></span>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/bestk.html">bestk</a></span><span class="op">(</span><span class="va">student_model</span><span class="op">)</span> <span class="co"># finding the optimal k value!</span></span>
 <span><span class="co">#&gt;   k       ROC      Sens      Spec     ROCSD     SensSD    SpecSD</span></span>
 <span><span class="co">#&gt; 4 7 0.9443204 0.9277778 0.8642857 0.0415595 0.06617294 0.1014877</span></span></code></pre></div>
 </div>

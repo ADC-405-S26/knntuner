@@ -9,10 +9,9 @@ controls, tuning grids, and extracting the best-performing k value in
 tedious repetitions. The knntuner package provides several small helper
 functions to help streamline this process.
 
-``` r
-
-library(knntuner)
-```
+*In the example below, make sure to run each of the code chunks in the
+same order that they are presented below - they respresent the basic
+statistical machine learning workflow.*
 
 ### Installation
 
@@ -55,6 +54,7 @@ library(recipes)
 #> The following object is masked from 'package:stats':
 #> 
 #>     step
+# calling necessary packages
 ```
 
 ### Example data
@@ -108,10 +108,10 @@ This is one way to split the data.
 
 set.seed(208)
 
-knntuner_data_split <- initial_split(data = student_knn_data, prop = 0.8)
+knntuner_data_split <- initial_split(data = student_knn_data, prop = 0.8) # setting training data to be 80%, and test data to be 20%, and saving these settings as an object
 
-student_train <- training(knntuner_data_split)
-student_test  <- testing(knntuner_data_split)
+student_train <- training(knntuner_data_split) # training data
+student_test  <- testing(knntuner_data_split) # test data
 ```
 
 ### Preprocessing with a recipe
@@ -127,10 +127,10 @@ because it is not relevant to the analysis.
 ``` r
 
 student_recipe <- recipe(pass ~ ., data = student_train) |>
-  step_rm(id) |>
-  step_dummy(all_nominal_predictors()) |>
-  step_center(all_numeric_predictors()) |>
-  step_scale(all_numeric_predictors())
+  step_rm(id) |> # ID will not be used as a predictor
+  step_dummy(all_nominal_predictors()) |> # dummy encoding nominal categorical variables
+  step_center(all_numeric_predictors()) |> # normalizing numeric values step 1
+  step_scale(all_numeric_predictors()) # normalizing numeric values step 2
 ```
 
 ### Creating cross-validation settings
@@ -159,7 +159,7 @@ to create their objects.
 
 ``` r
 
-cv <- cv_control()
+cv <- cv_control() # the default arguments are a "repeatedcv" method, 5 folds, 1 repeat, classProbs = TRUE, and summaryFunction = caret::twoClassSummary
 ```
 
 ### Creating a k grid
@@ -200,8 +200,9 @@ below is the sensitivity.
 
 ``` r
 
-set.seed(208)
+set.seed(208) 
 
+# here, we train the model and apply cross-validation with caret::train
 student_model <- train(
   student_recipe,
   data = student_train,
@@ -226,7 +227,7 @@ There is only 1 input:
 
 ``` r
 
-bestk(student_model)
+bestk(student_model) # now, find the best k!
 #>   k       ROC      Sens      Spec     ROCSD     SensSD    SpecSD
 #> 4 7 0.9443204 0.9277778 0.8642857 0.0415595 0.06617294 0.1014877
 ```

@@ -1,7 +1,15 @@
 # knntuner
 
 The goal of knntuner is to allow for more efficient cross-validation and
-tuning for k parameters within KNN problems.
+tuning for k parameters within KNN problems. Often, these processes
+require several lines of code in a repetitive manner, and knntuner’s
+goal is to streamline the process.
+
+In the example below, make sure to run each of the code chunks in the
+same order that they are presented below - they respresent the basic
+statistical machine learning workflow. Please see the vignette on the
+package website for more detailed information on each package function,
+and ways to customize their outputs.
 
 ## Installation
 
@@ -50,6 +58,24 @@ library(recipes)
 # necessary packages
 ```
 
+In this package, there is a small simulated dataset of 100 observations
+in 6 variables. The data measure student characteristics, and track
+their performance. A head of the dataset can be seen below, and further
+information on each variable can be found in the vignette on the package
+website.
+
+``` r
+
+head(student_knn_data) # simulated dataset as a part of knntuner (100 observations)
+#>   id age study_hours     score private_tutoring pass
+#> 1  1  18          12 100.00000               NO  YES
+#> 2  2  21           7  66.49531              YES   NO
+#> 3  3  18          10  82.54343              YES  YES
+#> 4  4  18           8  50.57019              YES   NO
+#> 5  5  20          12  85.38308              YES  YES
+#> 6  6  21           5  63.46618              YES   NO
+```
+
 First, start with the standard split of data into a training set and a
 test set. This example uses the student dataset built into the package.
 
@@ -57,10 +83,10 @@ test set. This example uses the student dataset built into the package.
 
 set.seed(208)
 
-knntuner_data_split <- initial_split(data = student_knn_data, prop = 0.8)
+knntuner_data_split <- initial_split(data = student_knn_data, prop = 0.8) # setting training data to be 80%, and test data to be 20%, and saving these settings as an object
 
-student_train <- training(knntuner_data_split)
-student_test  <- testing(knntuner_data_split)
+student_train <- training(knntuner_data_split) # training data
+student_test  <- testing(knntuner_data_split) # test data
 ```
 
 Next, create a recipe to remove the ID column, dummy-code categorical
@@ -70,10 +96,10 @@ data for analysis.
 ``` r
 
 student_recipe <- recipe(pass ~ ., data = student_train) |>
-  step_rm(id) |>
-  step_dummy(all_nominal_predictors()) |>
-  step_center(all_numeric_predictors()) |>
-  step_scale(all_numeric_predictors())
+  step_rm(id) |> # ID will not be used as a predictor
+  step_dummy(all_nominal_predictors()) |> # dummy encoding nominal categorical variables
+  step_center(all_numeric_predictors()) |> # normalizing numeric values step 1
+  step_scale(all_numeric_predictors()) # normalizing numeric values step 2
 ```
 
 Then, define your cross-validation specifications with the `cv_control`
@@ -81,7 +107,7 @@ function.
 
 ``` r
 
-cv <- cv_control() # the default arguments are a "repeatedcv" method, 5 folds, 1 repeat, classProbs = TRUE, and summaryFunction = caret::twoClassSummary
+cv <- cv_control() # creating the cv specifications and storing them as cv
 ```
 
 Next, you can train and cross-validate your model using the
@@ -94,14 +120,14 @@ to test, as well as the step size to take.
 
 set.seed(208)
 
-k_grid <- kgrid(1, 9, 2) # knntuner function here!
+k_grid <- kgrid(1, 9, 2) # knntuner function here, creating the desired kgrid and storing it as an object
 
 student_model <- train(
   student_recipe,
   data = student_train,
   method = "knn",
-  trControl = cv,
-  tuneGrid = k_grid,
+  trControl = cv, # knntuner object here!
+  tuneGrid = k_grid, # knntuner object here!
   metric = "Sens"
 )
 ```
@@ -112,7 +138,7 @@ your final model, and analyzing its performance on the test data.
 
 ``` r
 
-bestk(student_model)
+bestk(student_model) # finding the optimal k value!
 #>   k       ROC      Sens      Spec     ROCSD     SensSD    SpecSD
 #> 4 7 0.9443204 0.9277778 0.8642857 0.0415595 0.06617294 0.1014877
 ```
