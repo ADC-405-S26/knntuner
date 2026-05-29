@@ -14,7 +14,7 @@ kgrid(min_k, max_k, step)
 \item{step}{numeric value for the size of each jump between k values}
 }
 \value{
-a data frame with one column, \code{k}, containing tuning values
+a data frame with one column, \code{k}, designed to hold tuning values
 }
 \description{
 Create a K Grid to test K values

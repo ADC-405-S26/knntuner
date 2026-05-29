@@ -4,7 +4,7 @@
 #' @param max_k numeric value for the maximum k value to test
 #' @param step numeric value for the size of each jump between k values
 #'
-#' @returns a data frame with one column, `k`, containing tuning values
+#' @returns a data frame with one column, `k`, designed to hold tuning values
 #' @export
 #'
 #' @examples
