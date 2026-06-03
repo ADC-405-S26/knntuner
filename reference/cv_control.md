@@ -108,7 +108,7 @@ cv_control()
 #>     names(out) <- c("ROC", "Sens", "Spec")
 #>     out
 #> }
-#> <bytecode: 0x561b121be958>
+#> <bytecode: 0x562e288ab298>
 #> <environment: namespace:caret>
 #> 
 #> $selectionFunction

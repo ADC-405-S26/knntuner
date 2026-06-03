@@ -6,7 +6,7 @@ require several lines of code in a repetitive manner, and knntuner’s
 goal is to streamline the process.
 
 In the example below, make sure to run each of the code chunks in the
-same order that they are presented below - they respresent the basic
+same order that they are presented below - they represent the basic
 statistical machine learning workflow. Please see the vignette on the
 package website for more detailed information on each package function,
 and ways to customize their outputs.
